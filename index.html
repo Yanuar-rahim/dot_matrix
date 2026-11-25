@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Belajar Dot Matrix | Arduino Uno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "media",
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Poppins", "ui-sans-serif", "system-ui", "sans-serif"],
+              sans: ["Poppins", "ui-sans-serif", "system-ui", "sans-serif"],
+              mono: ["ui-monospace", "Menlo", "Consolas", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      :root {
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        @apply bg-slate-50 text-slate-800 font-sans antialiased dark:bg-slate-950 dark:text-slate-200;
+      }
+      .h2 {
+        @apply font-display text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-5;
+      }
+      .h3 {
+        @apply font-display text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-3;
+      }
+      .txt {
+        @apply leading-relaxed text-slate-700 dark:text-slate-300 mb-4 w-full max-w-none;
+      }
+      .list {
+        @apply list-disc pl-5 space-y-2 mb-4 w-full max-w-none text-slate-700 dark:text-slate-300 marker:text-amber-500;
+      }
+      .steps {
+        @apply list-decimal pl-5 space-y-2 mb-4 w-full max-w-none text-slate-700 dark:text-slate-300 marker:font-semibold marker:text-amber-600;
+      }
+      .note {
+        @apply rounded-lg border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-400/10 px-4 py-3 mb-5 w-full max-w-none text-slate-800 dark:text-slate-200;
+      }
+      .tblw {
+        @apply overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 mb-5;
+      }
+      .tblw table {
+        @apply w-full text-left text-sm;
+      }
+      .tblw th {
+        @apply bg-slate-100 dark:bg-slate-900 px-4 py-3 font-semibold text-slate-900 dark:text-white;
+      }
+      .tblw td {
+        @apply px-4 py-3 border-t border-slate-200 dark:border-slate-800 align-top;
+      }
+      .tblw td:first-child {
+        @apply font-medium whitespace-nowrap;
+      }
+      pre {
+        @apply bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto text-[13px] leading-6 font-mono mb-4;
+      }
+      code.i {
+        @apply font-mono text-[0.9em] bg-slate-200/70 dark:bg-slate-800 rounded px-1.5 py-0.5;
+      }
+      a.lnk {
+        @apply text-indigo-700 dark:text-indigo-300 underline underline-offset-2 break-all;
+      }
+      .navb {
+        @apply w-full flex items-center gap-3 text-left px-3 py-2 rounded-md text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800;
+      }
+      .navb[aria-current="true"] {
+        @apply bg-slate-900 text-white dark:bg-amber-400 dark:text-slate-900 font-medium;
+      }
+      .btn {
+        @apply inline-flex items-center rounded-lg px-4 py-2.5 font-medium transition;
+      }
+      .btn-p {
+        @apply bg-slate-900 text-white dark:bg-amber-400 dark:text-slate-900 hover:opacity-90;
+      }
+      .btn-o {
+        @apply border border-slate-300 dark:border-slate-700 hover:bg-slate-200/60 dark:hover:bg-slate-800;
+      }
+      .card {
+        @apply rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4;
+      }
+      .led {
+        @apply aspect-square rounded-full bg-slate-700;
+      }
+      .led.on {
+        @apply bg-amber-400;
+        box-shadow:
+          0 0 10px #fbbf24,
+          0 0 20px #fbbf2455;
+      }
+      .pixel {
+        @apply aspect-square rounded-full bg-slate-700 cursor-pointer border-0 p-0;
+      }
+      .pixel.active {
+        @apply bg-amber-400;
+        box-shadow: 0 0 8px #fbbf24;
+      }
+      .board {
+        @apply grid grid-cols-8 gap-1.5 bg-slate-950 p-3 rounded-xl max-w-[270px] mb-4;
+      }
+      :focus-visible {
+        @apply outline outline-2 outline-offset-2 outline-indigo-500;
+      }
+      section[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header
+      class="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-950/95 px-4 py-3"
+    >
+      <button
+        id="menuBtn"
+        class="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm"
+        aria-label="Buka daftar materi"
+        aria-expanded="false"
+      >
+        Materi
+      </button>
+      <span class="font-display font-bold">Belajar Dot Matrix</span>
+    </header>
+
+    <div class="w-full min-h-screen lg:grid lg:grid-cols-[290px_minmax(0,1fr)]">
+      <aside
+        id="side"
+        class="fixed lg:sticky top-0 left-0 z-40 h-screen w-72 lg:w-auto -translate-x-full lg:translate-x-0 transition-transform bg-slate-100 dark:bg-slate-900 lg:bg-transparent lg:dark:bg-transparent border-r border-slate-200 dark:border-slate-800 overflow-y-auto p-4"
+        style="padding-top: max(1rem, env(safe-area-inset-top, 0px))"
+      >
+        <a
+          href="#home"
+          class="block font-display text-2xl font-extrabold text-slate-900 dark:text-white mb-1"
+          >Belajar Dot Matrix</a
+        >
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          MAX7219 dan Arduino Uno · Pertemuan 4
+        </p>
+        <div class="mb-4">
+          <div
+            class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1"
+          >
+            <span>Progres belajar</span><span id="pTxt">0%</span>
+          </div>
+          <div
+            class="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"
+          >
+            <div id="pBar" class="h-full w-0 bg-amber-400 transition-all"></div>
+          </div>
+        </div>
+        <nav id="nav" class="space-y-0.5" aria-label="Daftar materi"></nav>
+      </aside>
+
+      <main class="min-w-0 w-full max-w-none px-5 sm:px-10 py-8 lg:py-14">
+        <section id="home" data-title="Beranda">
+          <h1
+            class="font-display text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-5"
+          >
+            Mengenal Dot Matrix 8×8
+          </h1>
+          <p class="txt text-lg">
+            Mengendalikan LED Dot Matrix MAX7219 dengan Arduino Uno menggunakan
+            library MD_MAX72XX dan MD_Parola.
+          </p>
+          <div id="heroGrid" class="board"></div>
+          <div class="note">
+            <strong>Tujuan pembelajaran.</strong> Menjelaskan prinsip Dot
+            Matrix, mengidentifikasi pin MAX7219, merangkai modul, menginstal
+            library, dan memodifikasi program untuk menghasilkan pola LED.
+          </div>
+          <div class="flex flex-wrap gap-3 mt-6">
+            <button class="btn btn-p" data-go="pengenalan">
+              Mulai belajar
+            </button>
+            <button class="btn btn-o" data-go="latihan">
+              Langsung ke latihan
+            </button>
+          </div>
+        </section>
+
+        <section id="pengenalan" data-title="Pengenalan Dot Matrix" hidden>
+          <h2 class="h2">Apa itu Dot Matrix?</h2>
+          <p class="txt">
+            Dot Matrix adalah tampilan elektronik yang tersusun dari titik-titik
+            LED dalam baris dan kolom. Setiap titik adalah satu LED yang dapat
+            diatur menyala atau mati.
+          </p>
+          <p class="txt">
+            Modul yang umum dipakai dalam praktikum berukuran
+            <strong>8×8</strong>: 8 baris dan 8 kolom, total 64 LED. Dengan
+            mengatur kombinasinya, kita dapat membentuk pola, simbol, angka,
+            hingga huruf.
+          </p>
+          <ul class="list">
+            <li>
+              <strong>64 titik LED:</strong> delapan baris dikali delapan kolom.
+            </li>
+            <li>
+              <strong>Kontrol digital:</strong> Arduino mengirim instruksi lewat
+              library MD_MAX72XX atau MD_Parola.
+            </li>
+            <li>
+              <strong>Tampilan fleksibel:</strong> ikon, animasi sederhana, dan
+              teks berjalan.
+            </li>
+            <li>
+              <strong>Hemat pin:</strong> MAX7219 memakai antarmuka serial
+              sehingga pemrogramannya lebih mudah.
+            </li>
+          </ul>
+          <h3 class="h3">Contoh penggunaan</h3>
+          <p class="txt">
+            Jam digital, papan informasi mini, indikator status perangkat,
+            penghitung skor, dan proyek animasi LED.
+          </p>
+        </section>
+
+        <section id="cara-kerja" data-title="Cara Kerja" hidden>
+          <h2 class="h2">Bagaimana Dot Matrix bekerja?</h2>
+          <p class="txt">
+            LED disusun dalam baris dan kolom. Pengendali memilih kombinasi
+            baris dan kolom untuk mengaktifkan titik tertentu. Pola nyala inilah
+            yang membentuk gambar atau karakter.
+          </p>
+          <div id="explainGrid" class="board"></div>
+          <p class="txt">
+            Untuk membuat simbol hati, program menyimpan pola 8 baris. Setiap
+            baris berisi delapan bit: <code class="i">1</code> berarti LED
+            menyala dan <code class="i">0</code> berarti mati. Pemetaan
+            persisnya dapat bergantung pada orientasi dan konfigurasi modul.
+          </p>
+          <div class="note">
+            <strong>Catatan.</strong> Modul Dot Matrix telanjang membutuhkan
+            rangkaian pengendali dan teknik multiplexing. Untuk pemula, modul
+            yang sudah dilengkapi MAX7219 lebih mudah digunakan.
+          </div>
+        </section>
+
+        <section id="komponen" data-title="Alat dan Bahan" hidden>
+          <h2 class="h2">Alat dan bahan</h2>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Komponen</th>
+                  <th>Fungsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Arduino Uno</td>
+                  <td>
+                    Papan mikrokontroler (ATmega328P) yang menjalankan program
+                    dan mengirim data.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Dot Matrix 8×8 MAX7219</td>
+                  <td>
+                    Modul LED 8×8 dengan IC driver untuk mengendalikan tampilan.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Kabel jumper</td>
+                  <td>Menghubungkan pin modul ke pin Arduino.</td>
+                </tr>
+                <tr>
+                  <td>Kabel USB</td>
+                  <td>
+                    Menghubungkan Arduino ke komputer untuk pemrograman dan
+                    daya.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Komputer / laptop</td>
+                  <td>Menulis dan mengunggah program lewat Arduino IDE.</td>
+                </tr>
+                <tr>
+                  <td>Breadboard (opsional)</td>
+                  <td>Membantu penyusunan rangkaian tambahan.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="max7219" data-title="Modul MAX7219" hidden>
+          <h2 class="h2">Mengenal modul MAX7219</h2>
+          <p class="txt">
+            MAX7219 adalah IC driver display untuk LED, termasuk Dot Matrix 8×8.
+            IC ini mengatur pengendalian LED sehingga Arduino cukup mengirim
+            data melalui antarmuka serial.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pin modul</th>
+                  <th>Fungsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="i">VCC</code></td>
+                  <td>Catu daya positif, umumnya 5V pada modul Arduino.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">GND</code></td>
+                  <td>Ground atau jalur negatif.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">DIN</code></td>
+                  <td>Data masuk dari Arduino.</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code class="i">CS</code> / <code class="i">LOAD</code>
+                  </td>
+                  <td>Pemilih perangkat dan latch data.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">CLK</code></td>
+                  <td>Clock untuk sinkronisasi pengiriman data.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            <strong>Perhatikan.</strong> Pastikan modul memang memiliki IC
+            MAX7219, dan periksa label pin serta jenis susunan modul (misalnya
+            FC-16) pada PCB. Jangan menghubungkan VCC secara sembarang jika
+            spesifikasi modul berbeda.
+          </div>
+        </section>
+
+        <section id="rangkaian" data-title="Rangkaian ke Arduino" hidden>
+          <h2 class="h2">Menghubungkan ke Arduino Uno</h2>
+          <p class="txt">
+            Pemetaan berikut untuk satu modul MAX7219 dengan software SPI.
+            Hubungkan kabel saat Arduino tidak sedang diberi daya.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>MAX7219</th>
+                  <th>Arduino Uno</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>VCC</td>
+                  <td><code class="i">5V</code></td>
+                  <td>Catu daya</td>
+                </tr>
+                <tr>
+                  <td>GND</td>
+                  <td><code class="i">GND</code></td>
+                  <td>Ground</td>
+                </tr>
+                <tr>
+                  <td>DIN</td>
+                  <td><code class="i">D12</code></td>
+                  <td>Data</td>
+                </tr>
+                <tr>
+                  <td>CS / LOAD</td>
+                  <td><code class="i">D10</code></td>
+                  <td>Chip select</td>
+                </tr>
+                <tr>
+                  <td>CLK</td>
+                  <td><code class="i">D11</code></td>
+                  <td>Clock</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            Pin D12, D11, dan D10 adalah konfigurasi yang dipakai pada kode di
+            materi ini. Jika pin diubah, sesuaikan juga parameter pada program.
+          </div>
+        </section>
+
+        <section id="library" data-title="Instalasi Library" hidden>
+          <h2 class="h2">Instalasi MD_Parola dan MD_MAX72XX</h2>
+          <ul class="list">
+            <li>
+              <strong>MD_MAX72XX:</strong> library tingkat rendah untuk
+              mengendalikan LED Matrix MAX7219/MAX7221 (titik, baris, kolom,
+              intensitas).
+            </li>
+            <li>
+              <strong>MD_Parola:</strong> library tingkat tinggi di atas
+              MD_MAX72XX untuk teks, posisi, teks berjalan, dan efek animasi.
+            </li>
+          </ul>
+          <div class="note">
+            <strong>Hubungan keduanya.</strong> MD_Parola membutuhkan
+            MD_MAX72XX. Instal keduanya.
+          </div>
+          <h3 class="h3">Langkah instalasi di Arduino IDE</h3>
+          <ol class="steps">
+            <li>Buka Arduino IDE.</li>
+            <li>Pilih <em>Sketch → Include Library → Manage Libraries</em>.</li>
+            <li>
+              Cari <strong>MD_MAX72XX</strong> dari MajicDesigns, lalu Install.
+            </li>
+            <li>
+              Cari <strong>MD_Parola</strong> dari MajicDesigns, lalu Install.
+            </li>
+            <li>
+              Pilih board <strong>Arduino Uno</strong> dan port yang benar di
+              menu Tools.
+            </li>
+          </ol>
+          <h3 class="h3">Menentukan jenis modul</h3>
+          <p class="txt">
+            Contoh program memakai modul <strong>FC-16</strong> (panel 4-in-1).
+            Jika modul Anda berbeda, sesuaikan tipe hardware dengan tulisan pada
+            PCB.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tipe hardware</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="i">MD_MAX72XX::FC16_HW</code></td>
+                  <td>Modul bertanda FC-16.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">MD_MAX72XX::PAROLA_HW</code></td>
+                  <td>Modul Parola.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">MD_MAX72XX::GENERIC_HW</code></td>
+                  <td>Modul generic.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">MD_MAX72XX::ICSTATION_HW</code></td>
+                  <td>Modul ICStation.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="txt">
+            Dokumentasi:
+            <a
+              class="lnk"
+              href="https://majicdesigns.github.io/MD_Parola/"
+              target="_blank"
+              rel="noopener"
+              >MD_Parola</a
+            >
+            ·
+            <a
+              class="lnk"
+              href="https://majicdesigns.github.io/MD_MAX72XX/"
+              target="_blank"
+              rel="noopener"
+              >MD_MAX72XX</a
+            >
+          </p>
+        </section>
+
+        <section id="program" data-title="Program Arduino" hidden>
+          <h2 class="h2">Menggunakan MD_Parola dan MD_MAX72XX</h2>
+          <p class="txt">
+            Ubah <code class="i">MAX_DEVICES</code> menjadi
+            <code class="i">1</code> untuk satu modul, atau
+            <code class="i">4</code> untuk panel 4-in-1. Nilai ini adalah jumlah
+            modul 8×8 yang dirangkai berantai, bukan jumlah LED.
+          </p>
+          <div
+            role="tablist"
+            id="codeTabs"
+            class="flex flex-wrap gap-2 mb-3"
+          ></div>
+          <div id="codePanel"></div>
+          <h3 class="h3">Perbandingan kedua library</h3>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Aspek</th>
+                  <th>MD_MAX72XX</th>
+                  <th>MD_Parola</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Fokus</td>
+                  <td>Kontrol LED tingkat rendah</td>
+                  <td>Teks dan animasi</td>
+                </tr>
+                <tr>
+                  <td>Titik tertentu</td>
+                  <td>Ya, misalnya <code class="i">setPoint()</code></td>
+                  <td>Bukan fungsi utama</td>
+                </tr>
+                <tr>
+                  <td>Teks berjalan</td>
+                  <td>Dibuat sendiri</td>
+                  <td>Tersedia</td>
+                </tr>
+                <tr>
+                  <td>Ketergantungan</td>
+                  <td>Kontrol hardware</td>
+                  <td>Menggunakan MD_MAX72XX</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            <strong>Catatan penting.</strong> Tipe
+            <code class="i">FC16_HW</code> harus sesuai dengan modul fisik. Jika
+            tampilan terbalik atau terputar, periksa jenis hardware dan
+            orientasi modul, bukan mengganti pin.
+          </div>
+        </section>
+
+        <section id="simulasi" data-title="Simulasi Pola LED" hidden>
+          <h2 class="h2">Simulasi pola LED 8×8</h2>
+          <p class="txt">
+            Klik titik untuk membuat pola sendiri. Ini ilustrasi interaktif,
+            bukan emulator rangkaian elektronik.
+          </p>
+          <div class="board" id="interactiveGrid"></div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-o" onclick="clearPixels()">Bersihkan</button>
+            <button class="btn btn-o" onclick="drawPattern(heart)">
+              Pola hati
+            </button>
+            <button class="btn btn-o" onclick="drawPattern(smile)">
+              Pola senyum
+            </button>
+          </div>
+        </section>
+
+        <section id="latihan" data-title="Latihan dan Evaluasi" hidden>
+          <h2 class="h2">Latihan dan evaluasi</h2>
+          <p class="txt">
+            Pilih satu jawaban untuk tiap soal. Jawaban langsung diperiksa.
+          </p>
+          <div id="quiz" class="space-y-6 max-w-8xl"></div>
+          <div
+            id="score"
+            class="mt-6 flex flex-wrap items-center gap-4"
+            aria-live="polite"
+          ></div>
+        </section>
+
+        <div
+          id="pager"
+          class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-between gap-3"
+        ></div>
+      </main>
+    </div>
+    <div
+      id="scrim"
+      class="fixed inset-0 z-30 bg-black/40 hidden lg:hidden"
+    ></div>
+
+    <script>
+      const secs = [...document.querySelectorAll("main section")];
+      const ids = secs.map((s) => s.id);
+      const nav = document.getElementById("nav");
+      const side = document.getElementById("side");
+      const scrim = document.getElementById("scrim");
+      let visited = new Set();
+      try {
+        visited = new Set(
+          JSON.parse(localStorage.getItem("dm-visited") || "[]"),
+        );
+      } catch (e) {}
+
+      secs.slice(1).forEach((s, i) => {
+        const b = document.createElement("button");
+        b.className = "navb";
+        b.dataset.id = s.id;
+        b.innerHTML =
+          '<span class="w-5 text-xs tabular-nums opacity-70">' +
+          (i + 1) +
+          '</span><span class="flex-1">' +
+          s.dataset.title +
+          '</span><span class="tick text-emerald-500 text-xs"></span>';
+        b.onclick = () => go(s.id);
+        nav.appendChild(b);
+      });
+
+      function progress() {
+        const n = ids.slice(1).filter((id) => visited.has(id)).length;
+        const pct = Math.round((n / (ids.length - 1)) * 100);
+        document.getElementById("pBar").style.width = pct + "%";
+        document.getElementById("pTxt").textContent = pct + "%";
+        nav
+          .querySelectorAll(".navb")
+          .forEach(
+            (b) =>
+              (b.querySelector(".tick").textContent = visited.has(b.dataset.id)
+                ? "✓"
+                : ""),
+          );
+      }
+
+      function show(id) {
+        if (!ids.includes(id)) id = "home";
+        secs.forEach((s) => (s.hidden = s.id !== id));
+        nav
+          .querySelectorAll(".navb")
+          .forEach((b) => b.setAttribute("aria-current", b.dataset.id === id));
+        if (id !== "home") {
+          visited.add(id);
+          try {
+            localStorage.setItem("dm-visited", JSON.stringify([...visited]));
+          } catch (e) {}
+        }
+        progress();
+        const i = ids.indexOf(id),
+          p = document.getElementById("pager");
+        const prev = ids[i - 1],
+          next = ids[i + 1];
+        p.innerHTML =
+          (prev
+            ? '<button class="btn btn-o" data-go="' +
+              prev +
+              '">Sebelumnya</button>'
+            : "<span></span>") +
+          (next
+            ? '<button class="btn btn-p" data-go="' +
+              next +
+              '">Berikutnya</button>'
+            : "<span></span>");
+        closeMenu();
+        window.scrollTo(0, 0);
+      }
+      function go(id) {
+        if (location.hash === "#" + id) show(id);
+        else location.hash = id;
+      }
+      window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+      document.addEventListener("click", (e) => {
+        const t = e.target.closest("[data-go]");
+        if (t) go(t.dataset.go);
+      });
+
+      const menuBtn = document.getElementById("menuBtn");
+      function closeMenu() {
+        side.classList.add("-translate-x-full");
+        scrim.classList.add("hidden");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
+      menuBtn.onclick = () => {
+        side.classList.remove("-translate-x-full");
+        scrim.classList.remove("hidden");
+        menuBtn.setAttribute("aria-expanded", "true");
+      };
+      scrim.onclick = closeMenu;
+
+      // Grid LED
+      const heart = [
+        0b01100110, 0b11111111, 0b11111111, 0b11111111, 0b01111110, 0b00111100,
+        0b00011000, 0,
+      ];
+      const smile = [
+        0b00111100, 0b01000010, 0b10100101, 0b10000001, 0b10100101, 0b10011001,
+        0b01000010, 0b00111100,
+      ];
+      function build(id, cls, rows, click) {
+        const el = document.getElementById(id);
+        for (let r = 0; r < 8; r++)
+          for (let c = 0; c < 8; c++) {
+            const d = document.createElement(click ? "button" : "div");
+            d.className = cls;
+            if (click) {
+              d.type = "button";
+              d.setAttribute(
+                "aria-label",
+                "Baris " + (r + 1) + " kolom " + (c + 1),
+              );
+              d.onclick = () => d.classList.toggle("active");
+            } else if ((rows[r] >> (7 - c)) & 1) d.classList.add("on");
+            el.appendChild(d);
+          }
+      }
+      build("heroGrid", "led", heart);
+      build("explainGrid", "led", heart);
+      build("interactiveGrid", "pixel", null, true);
+      const px = () => document.querySelectorAll("#interactiveGrid .pixel");
+      function clearPixels() {
+        px().forEach((x) => x.classList.remove("active"));
+      }
+      function drawPattern(rows) {
+        clearPixels();
+        px().forEach((x, i) => {
+          if ((rows[i >> 3] >> (7 - (i % 8))) & 1) x.classList.add("active");
+        });
+      }
+      drawPattern(heart);
+
+      // Tab kode
+      const code = {
+        MD_Parola: [
+          "Teks berjalan dengan MD_Parola",
+          `#include &lt;MD_Parola.h&gt;
+#include &lt;MD_MAX72xx.h&gt;
+
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define MAX_DEVICES 4
+
+#define DATA_PIN 12
+#define CLK_PIN  11
+#define CS_PIN   10
+
+MD_Parola display = MD_Parola(
+  HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES
+);
+
+void setup() {
+  display.begin();
+  display.setIntensity(5);   // kecerahan 0-15
+  display.displayClear();
+  display.displayText(
+    "BELAJAR ARDUINO",  // teks
+    PA_CENTER,          // posisi
+    50,                 // kecepatan
+    1000,               // jeda (ms)
+    PA_SCROLL_LEFT,     // efek masuk
+    PA_SCROLL_LEFT      // efek keluar
+  );
+}
+
+void loop() {
+  if (display.displayAnimate()) {
+    display.displayReset();
+  }
+}`,
+          '<code class="i">displayText()</code> menentukan teks, posisi (<code class="i">PA_LEFT</code>, <code class="i">PA_CENTER</code>, <code class="i">PA_RIGHT</code>), kecepatan, jeda, serta efek masuk dan keluar. <code class="i">displayAnimate()</code> harus dipanggil berulang di <code class="i">loop()</code> agar animasi berjalan, dan <code class="i">displayReset()</code> mengulang animasi setelah satu siklus.',
+        ],
+        MD_MAX72XX: [
+          "Kontrol LED langsung dengan MD_MAX72XX",
+          `#include &lt;MD_MAX72xx.h&gt;
+
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define MAX_DEVICES 4
+
+#define DATA_PIN 12
+#define CLK_PIN  11
+#define CS_PIN   10
+
+MD_MAX72XX matrix = MD_MAX72XX(
+  HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES
+);
+
+void setup() {
+  matrix.begin();
+  matrix.control(MD_MAX72XX::INTENSITY, 5);  // kecerahan 0-15
+  matrix.clear();
+}
+
+void loop() {
+  // Nyalakan 4 titik LED di tengah
+  matrix.setPoint(3, 3, true);
+  matrix.setPoint(3, 4, true);
+  matrix.setPoint(4, 3, true);
+  matrix.setPoint(4, 4, true);
+  delay(1000);
+
+  matrix.clear();            // matikan semua LED
+  delay(1000);
+}`,
+          '<code class="i">setPoint(baris, kolom, true)</code> menyalakan satu titik LED, sedangkan <code class="i">clear()</code> mematikan semuanya. Berbeda dari MD_Parola, library ini memberi kendali langsung pada LED tanpa animasi teks.',
+        ],
+      };
+      const ctabs = document.getElementById("codeTabs"),
+        cpanel = document.getElementById("codePanel");
+      function codeShow(k) {
+        ctabs.querySelectorAll("button").forEach((b) => {
+          const on = b.dataset.k === k;
+          b.setAttribute("aria-selected", on);
+          b.className = "btn " + (on ? "btn-p" : "btn-o");
+        });
+        const c = code[k];
+        cpanel.innerHTML =
+          '<h3 class="h3 !mt-2">' +
+          c[0] +
+          '</h3><div class="relative"><button id="cpBtn" class="absolute right-2 top-2 rounded-md border border-slate-600 bg-slate-800 text-slate-200 px-2.5 py-1 text-xs hover:bg-slate-700">Salin kode</button><pre><code>' +
+          c[1] +
+          '</code></pre></div><p class="txt">' +
+          c[2] +
+          "</p>";
+        document.getElementById("cpBtn").onclick = (e) => copyCode(e.target);
+      }
+      function copyCode(btn) {
+        const t = btn.parentElement.querySelector("code").innerText;
+        const ok = () => {
+          btn.textContent = "Tersalin!";
+          setTimeout(() => (btn.textContent = "Salin kode"), 1500);
+        };
+        const fb = () => {
+          const a = document.createElement("textarea");
+          a.value = t;
+          document.body.appendChild(a);
+          a.select();
+          try {
+            document.execCommand("copy");
+            ok();
+          } catch (e) {
+            btn.textContent = "Gagal menyalin";
+          }
+          a.remove();
+        };
+        try {
+          navigator.clipboard.writeText(t).then(ok, fb);
+        } catch (e) {
+          fb();
+        }
+      }
+      Object.keys(code).forEach((k) => {
+        const b = document.createElement("button");
+        b.dataset.k = k;
+        b.setAttribute("role", "tab");
+        b.textContent = k;
+        b.onclick = () => codeShow(k);
+        ctabs.appendChild(b);
+      });
+      codeShow("MD_Parola");
+
+      // Kuis
+      const Q = [
+        [
+          "Berapa jumlah LED pada Dot Matrix 8×8?",
+          ["8 LED", "64 LED", "16 LED", "32 LED"],
+          1,
+        ],
+        [
+          "Apa fungsi utama IC MAX7219?",
+          [
+            "Menyimpan program Arduino",
+            "Mengendalikan tampilan LED Dot Matrix",
+            "Mengukur suhu ruangan",
+            "Mengubah tegangan USB",
+          ],
+          1,
+        ],
+        [
+          "Library apa yang dipakai pada contoh program?",
+          ["LedControl", "LiquidCrystal", "MD_Parola dan MD_MAX72XX", "Servo"],
+          2,
+        ],
+        [
+          "Fungsi yang menyalakan satu titik LED pada MD_MAX72XX adalah ...",
+          ["setPoint()", "displayText()", "displayReset()", "begin()"],
+          0,
+        ],
+        [
+          "Pada MD_Parola, fungsi yang harus dipanggil berulang di loop() agar animasi berjalan adalah ...",
+          [
+            "displayClear()",
+            "setIntensity()",
+            "displayAnimate()",
+            "displayText()",
+          ],
+          2,
+        ],
+      ];
+      const quiz = document.getElementById("quiz"),
+        scoreEl = document.getElementById("score");
+      let answered = {};
+      function renderQuiz() {
+        answered = {};
+        quiz.innerHTML = "";
+        Q.forEach((q, qi) => {
+          const f = document.createElement("fieldset");
+          f.innerHTML =
+            '<legend class="font-semibold text-slate-900 dark:text-white mb-3">' +
+            (qi + 1) +
+            ". " +
+            q[0] +
+            "</legend>";
+          q[1].forEach((o, oi) => {
+            const b = document.createElement("button");
+            b.className =
+              "opt block w-full text-left rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2.5 mb-2 hover:bg-slate-200/60 dark:hover:bg-slate-800";
+            b.textContent = "ABCD"[oi] + ". " + o;
+            b.onclick = () => {
+              if (answered[qi] !== undefined) return;
+              answered[qi] = oi;
+              f.querySelectorAll(".opt").forEach((x, xi) => {
+                x.classList.remove(
+                  "hover:bg-slate-200/60",
+                  "dark:hover:bg-slate-800",
+                );
+                if (xi === q[2])
+                  x.classList.add(
+                    "border-emerald-500",
+                    "bg-emerald-100",
+                    "dark:bg-emerald-500/20",
+                  );
+                else if (xi === oi)
+                  x.classList.add(
+                    "border-rose-500",
+                    "bg-rose-100",
+                    "dark:bg-rose-500/20",
+                  );
+              });
+              b.insertAdjacentHTML(
+                "beforeend",
+                oi === q[2]
+                  ? " <strong>(benar)</strong>"
+                  : " <strong>(kurang tepat)</strong>",
+              );
+              updScore();
+            };
+            f.appendChild(b);
+          });
+          quiz.appendChild(f);
+        });
+        updScore();
+      }
+      function updScore() {
+        const done = Object.keys(answered).length;
+        const ok = Object.entries(answered).filter(
+          ([qi, a]) => Q[qi][2] === a,
+        ).length;
+        scoreEl.innerHTML =
+          '<span class="font-display text-2xl font-bold text-slate-900 dark:text-white">Skor: ' +
+          ok +
+          " / " +
+          Q.length +
+          "</span>" +
+          (done === Q.length
+            ? '<span class="text-slate-600 dark:text-slate-400">' +
+              (ok === Q.length
+                ? "Sempurna. Semua jawaban benar."
+                : "Selesai. Baca ulang materi yang masih kurang tepat.") +
+              "</span>"
+            : '<span class="text-slate-500">' +
+              done +
+              " dari " +
+              Q.length +
+              " soal dijawab</span>") +
+          '<button id="resetQ" class="btn btn-o">Ulangi</button>';
+        document.getElementById("resetQ").onclick = renderQuiz;
+      }
+      renderQuiz();
+
+      show(location.hash.slice(1));
+    </script>
+  </body>
+</html>
